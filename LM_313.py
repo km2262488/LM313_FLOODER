@@ -26,7 +26,15 @@ def tampilkan_banner():
     # Coba metode ANSI blink
     try:
         # ANSI escape code untuk blink (hanya berfungsi di terminal tertentu)
-        print("\033[5m" + banner + "\033[0m")
+        print("\033[5m"                                                                                                   
+ ▄      ▄    ▄         ▄▄▄▄  ▄▄▄     ▄▄▄▄         ▄▄▄▄▄▄ ▄       ▄▄▄▄   ▄▄▄▄  ▄▄▄▄   ▄▄▄▄▄▄ ▄▄▄▄▄ 
+ █      ██  ██        ▀   ▀█   █    ▀   ▀█        █      █      ▄▀  ▀▄ ▄▀  ▀▄ █   ▀▄ █      █   ▀█
+ █      █ ██ █          ▄▄▄▀   █      ▄▄▄▀        █▄▄▄▄▄ █      █    █ █    █ █    █ █▄▄▄▄▄ █▄▄▄▄▀
+ █      █ ▀▀ █            ▀█   █        ▀█        █      █      █    █ █    █ █    █ █      █   ▀▄
+ █▄▄▄▄▄ █    █        ▀▄▄▄█▀ ▄▄█▄▄  ▀▄▄▄█▀        █      █▄▄▄▄▄  █▄▄█   █▄▄█  █▄▄▄▀  █▄▄▄▄▄ █    ▀
+                                                                                                  
+              ▀▀▀▀▀▀                                                                              
+              "\033[0m")
         # Diamkan sebentar agar terlihat berkedip
         time.sleep(1)
         # Hapus efek blink dengan mencetak ulang tanpa escape
