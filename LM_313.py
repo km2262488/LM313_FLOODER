@@ -13,20 +13,9 @@ import sys
 import os
 from collections import Counter
 
-try:
-    import pyfiglet
-except ImportError:
-    print("[!] pyfiglet tidak terinstall. Jalankan: pip install pyfiglet")
-    sys.exit(1)
-
-# -------------------- BANNER BERKEDIP --------------------
-def tampilkan_banner():
-    """Menampilkan banner 'LM_313' dengan efek berkedip."""
-    banner = pyfiglet.figlet_format("LM_313", font="slant")   # ganti font jika suka
-    # Coba metode ANSI blink
-    try:
-        # ANSI escape code untuk blink (hanya berfungsi di terminal tertentu)
-        print("\033[5m"                                                                                                   
+# ==================== BANNER ASCII (dari input Anda) ====================
+BANNER = """
+                                                                                                  
  ▄      ▄    ▄         ▄▄▄▄  ▄▄▄     ▄▄▄▄         ▄▄▄▄▄▄ ▄       ▄▄▄▄   ▄▄▄▄  ▄▄▄▄   ▄▄▄▄▄▄ ▄▄▄▄▄ 
  █      ██  ██        ▀   ▀█   █    ▀   ▀█        █      █      ▄▀  ▀▄ ▄▀  ▀▄ █   ▀▄ █      █   ▀█
  █      █ ██ █          ▄▄▄▀   █      ▄▄▄▀        █▄▄▄▄▄ █      █    █ █    █ █    █ █▄▄▄▄▄ █▄▄▄▄▀
@@ -34,30 +23,19 @@ def tampilkan_banner():
  █▄▄▄▄▄ █    █        ▀▄▄▄█▀ ▄▄█▄▄  ▀▄▄▄█▀        █      █▄▄▄▄▄  █▄▄█   █▄▄█  █▄▄▄▀  █▄▄▄▄▄ █    ▀
                                                                                                   
               ▀▀▀▀▀▀                                                                              
-              "\033[0m")
-        # Diamkan sebentar agar terlihat berkedip
-        time.sleep(1)
-        # Hapus efek blink dengan mencetak ulang tanpa escape
-        print("\033[?25l")  # sembunyikan kursor sementara
-        for _ in range(3):
-            os.system('clear' if os.name == 'posix' else 'cls')
-            print(banner)
-            time.sleep(0.5)
-            os.system('clear' if os.name == 'posix' else 'cls')
-            time.sleep(0.3)
-        print("\033[?25h")  # tampilkan kursor lagi
-        print(banner)       # tampilkan akhir
-    except:
-        # Fallback: kedip dengan clear screen
-        for _ in range(3):
-            os.system('clear' if os.name == 'posix' else 'cls')
-            print(banner)
-            time.sleep(0.5)
-            os.system('clear' if os.name == 'posix' else 'cls')
-            time.sleep(0.3)
-        print(banner)
+"""
 
-# -------------------- KONFIGURASI --------------------
+def tampilkan_banner():
+    """Tampilkan banner dengan efek berkedip (clear screen + sleep)."""
+    for _ in range(3):               # berkedip 3 kali
+        os.system('clear' if os.name == 'posix' else 'cls')
+        print(BANNER)
+        time.sleep(0.4)
+        os.system('clear' if os.name == 'posix' else 'cls')
+        time.sleep(0.2)
+    print(BANNER)                    # tampilkan permanen
+
+# ==================== KONFIGURASI LOAD TEST ====================
 url = ''
 request_counter = 0
 error_counter = 0
@@ -151,7 +129,7 @@ def monitor(total_requests):
 
     stop_flag = True
     elapsed = time.time() - start
-    time.sleep(0.5) # kasih jeda biar thread berhenti dulu
+    time.sleep(0.5)
     print_summary(elapsed)
 
 def print_summary(elapsed):
@@ -175,7 +153,7 @@ def print_summary(elapsed):
             print(f" {code}: {count}x")
     print("="*50 + "\n")
 
-# -------------------- EKSEKUSI UTAMA --------------------
+# ==================== EKSEKUSI UTAMA ====================
 if __name__ == "__main__":
     # Tampilkan banner berkedip
     tampilkan_banner()
