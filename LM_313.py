@@ -28,15 +28,55 @@ BANNER = """
         
        """ 
 
+# ==================== FUNGSI WARNA ANSI ====================
+def warna_teks(kode):
+    return f"\033[{kode}m"
+
+RESET = "\033[0m"
+
+# Daftar warna untuk banner (bright)
+WARNA_BANNER = [
+    '91',  # merah terang
+    '93',  # kuning terang
+    '92',  # hijau terang
+    '96',  # cyan terang
+    '94',  # biru terang
+    '95',  # magenta terang
+    '97',  # putih terang
+]
+
+def cetak_banner_warna():
+    """Cetak banner dengan setiap baris warna berbeda."""
+    lines = BANNER.strip('\n').split('\n')
+    for i, line in enumerate(lines):
+        color_code = WARNA_BANNER[i % len(WARNA_BANNER)]
+        print(f"{warna_teks(color_code)}{line}{RESET}")
+
 def tampilkan_banner():
-    """Tampilkan banner dengan efek berkedip."""
-    for _ in range(3):
+    """Tampilkan banner berkedip dengan warna-warni selama 5 detik."""
+    start_time = time.time()
+    # Kedip selama 5 detik
+    while time.time() - start_time < 5:
         os.system('clear' if os.name == 'posix' else 'cls')
-        print(BANNER)
-        time.sleep(0.8)
+        cetak_banner_warna()
+        time.sleep(0.5)
         os.system('clear' if os.name == 'posix' else 'cls')
-        time.sleep(0.2)
-    print(BANNER)
+        time.sleep(0.3)
+    # Tampilkan permanen setelah kedip
+    os.system('clear' if os.name == 'posix' else 'cls')
+    cetak_banner_warna()
+
+# ==================== WARNA UNTUK STATUS ====================
+def warna_status(code):
+    """Kembalikan kode warna ANSI berdasarkan status HTTP."""
+    if 200 <= code < 300:
+        return '92'  # hijau
+    elif 300 <= code < 500:
+        return '93'  # kuning
+    elif 500 <= code < 600:
+        return '91'  # merah
+    else:
+        return '0'   # default
 
 # ==================== KONFIGURASI ====================
 url = ''
@@ -70,7 +110,6 @@ def build_params():
         else:
             return "?" + ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=5)) + "=1"
     else:  # POST
-        # Data dummy untuk POST
         return ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=10))
 
 def http_call():
@@ -80,13 +119,12 @@ def http_call():
         success = False
         while retry < MAX_RETRY and not success and not stop_flag:
             try:
-                # Bangun target URL atau data
                 if method in ('GET', 'HEAD'):
                     target = url + build_params()
                     data = None
                 else:  # POST
                     target = url
-                    data = build_params().encode('utf-8')  # data dikirim dalam body
+                    data = build_params().encode('utf-8')
 
                 req = urllib.request.Request(target, data=data, method=method)
                 req.add_header('User-Agent', random.choice(headers_useragents))
@@ -102,7 +140,9 @@ def http_call():
                         request_counter += 1
                         response_times.append(resp_time)
                     if not stop_flag:
-                        print(f"[{code}] {resp_time:.0f}ms - Total: {request_counter} - Method: {method} - URL: {url}")
+                        # Cetak dengan warna sesuai status
+                        color = warna_status(code)
+                        print(f"{warna_teks(color)}[{code}]{RESET} {resp_time:.0f}ms - Total: {request_counter} - Method: {method} - URL: {url}")
                     success = True
 
             except urllib.error.HTTPError as e:
@@ -113,7 +153,8 @@ def http_call():
                         request_counter += 1
                         error_codes[e.code] += 1
                     if not stop_flag:
-                        print(f"[{e.code}] HTTP Error setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
+                        color = warna_status(e.code)
+                        print(f"{warna_teks(color)}[{e.code}]{RESET} HTTP Error setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
 
             except urllib.error.URLError as e:
                 retry += 1
@@ -122,7 +163,7 @@ def http_call():
                         error_counter += 1
                         error_codes['TIMEOUT'] += 1
                     if not stop_flag:
-                        print(f"[TIMEOUT] Setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
+                        print(f"{warna_teks('91')}[TIMEOUT]{RESET} Setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
 
             except Exception as e:
                 retry += 1
@@ -131,7 +172,7 @@ def http_call():
                         error_counter += 1
                         error_codes['OTHER'] += 1
                     if not stop_flag:
-                        print(f"[ERR] Setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
+                        print(f"{warna_teks('91')}[ERR]{RESET} Setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
 
             time.sleep(0.2)
         time.sleep(0.05)
@@ -170,7 +211,11 @@ def print_summary(elapsed):
     if error_codes:
         print("\n--- Breakdown Error ---")
         for code, count in error_codes.most_common():
-            print(f" {code}: {count}x")
+            if isinstance(code, int):
+                color = warna_status(code)
+                print(f" {warna_teks(color)}{code}{RESET}: {count}x")
+            else:
+                print(f" {code}: {count}x")
     print("="*50 + "\n")
 
 # ==================== EKSEKUSI UTAMA ====================
@@ -186,7 +231,6 @@ if __name__ == "__main__":
     total_requests = int(sys.argv[3]) if len(sys.argv) > 3 else 500
     TIMEOUT = int(sys.argv[4]) if len(sys.argv) > 4 else 30
 
-    # Ambil metode dari argumen ke-5 (jika ada)
     if len(sys.argv) > 5:
         method = sys.argv[5].upper()
         if method not in ['GET', 'POST', 'HEAD']:
