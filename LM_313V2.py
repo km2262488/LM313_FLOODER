@@ -15,8 +15,7 @@ from collections import Counter
 
 # ==================== BANNER ASCII ====================
 BANNER = """
-                                                                                                  
- ░██         ░███     ░███              ░██████    ░██    ░██████     
+                                                                                                   ░██         ░███     ░███              ░██████    ░██    ░██████     
 ░██         ░████   ░████             ░██   ░██ ░████   ░██   ░██    
 ░██         ░██░██ ░██░██                   ░██   ░██         ░██    
 ░██         ░██ ░████ ░██               ░█████    ░██     ░█████     
@@ -31,7 +30,7 @@ def tampilkan_banner():
     for _ in range(3):
         os.system('clear' if os.name == 'posix' else 'cls')
         print(BANNER)
-        time.sleep(0.4)
+        time.sleep(0.8)
         os.system('clear' if os.name == 'posix' else 'cls')
         time.sleep(0.2)
     print(BANNER)
