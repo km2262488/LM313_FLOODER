@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ----------------------------------------------------------------------------------------------
 # LM_313 Load Tester 
-# Usage: python3 LM_313.py https://target.com 50 600 20
+# Usage: python3 LM_313.py https://target.com 50 600 20 [GET|POST|HEAD]
 # ----------------------------------------------------------------------------------------------
 
 import urllib.request
@@ -27,15 +27,6 @@ BANNER = """
         
         
        """ 
-        
-        
-        
-        
-        
-        
-        
-        
-        
 
 def tampilkan_banner():
     """Tampilkan banner dengan efek berkedip."""
@@ -49,6 +40,7 @@ def tampilkan_banner():
 
 # ==================== KONFIGURASI ====================
 url = ''
+method = 'GET'          # default
 request_counter = 0
 error_counter = 0
 response_times = []
@@ -66,14 +58,20 @@ headers_useragents = [
 
 def usage():
     print("--------------------------------------------------")
-    print('USAGE: python3 LM_313.py https://target.com 50 600 20')
+    print('USAGE: python3 LM_313.py https://target.com 50 600 20 [GET|POST|HEAD]')
+    print("       Metode default: GET")
     print("-------------------------------------------------")
 
 def build_params():
-    if "?" in url:
-        return "&" + ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=5)) + "=1"
-    else:
-        return "?" + ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=5)) + "=1"
+    """Bangun parameter query acak untuk GET/HEAD, atau data untuk POST."""
+    if method in ('GET', 'HEAD'):
+        if "?" in url:
+            return "&" + ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=5)) + "=1"
+        else:
+            return "?" + ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=5)) + "=1"
+    else:  # POST
+        # Data dummy untuk POST
+        return ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ', k=10))
 
 def http_call():
     global request_counter, error_counter, stop_flag
@@ -82,10 +80,19 @@ def http_call():
         success = False
         while retry < MAX_RETRY and not success and not stop_flag:
             try:
-                target = url + build_params()
-                req = urllib.request.Request(target)
+                # Bangun target URL atau data
+                if method in ('GET', 'HEAD'):
+                    target = url + build_params()
+                    data = None
+                else:  # POST
+                    target = url
+                    data = build_params().encode('utf-8')  # data dikirim dalam body
+
+                req = urllib.request.Request(target, data=data, method=method)
                 req.add_header('User-Agent', random.choice(headers_useragents))
                 req.add_header('Cache-Control', 'no-cache')
+                if method == 'POST':
+                    req.add_header('Content-Type', 'application/x-www-form-urlencoded')
 
                 start_time = time.time()
                 with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
@@ -95,8 +102,7 @@ def http_call():
                         request_counter += 1
                         response_times.append(resp_time)
                     if not stop_flag:
-                        # TAMPILKAN URL DI SETIAP RESPON SUKSES
-                        print(f"[{code}] {resp_time:.0f}ms - Total: {request_counter} - URL: {url}")
+                        print(f"[{code}] {resp_time:.0f}ms - Total: {request_counter} - Method: {method} - URL: {url}")
                     success = True
 
             except urllib.error.HTTPError as e:
@@ -107,7 +113,7 @@ def http_call():
                         request_counter += 1
                         error_codes[e.code] += 1
                     if not stop_flag:
-                        print(f"[{e.code}] HTTP Error setelah {MAX_RETRY}x retry - URL: {url}")
+                        print(f"[{e.code}] HTTP Error setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
 
             except urllib.error.URLError as e:
                 retry += 1
@@ -116,7 +122,7 @@ def http_call():
                         error_counter += 1
                         error_codes['TIMEOUT'] += 1
                     if not stop_flag:
-                        print(f"[TIMEOUT] Setelah {MAX_RETRY}x retry - URL: {url}")
+                        print(f"[TIMEOUT] Setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
 
             except Exception as e:
                 retry += 1
@@ -125,7 +131,7 @@ def http_call():
                         error_counter += 1
                         error_codes['OTHER'] += 1
                     if not stop_flag:
-                        print(f"[ERR] Setelah {MAX_RETRY}x retry - URL: {url}")
+                        print(f"[ERR] Setelah {MAX_RETRY}x retry - Method: {method} - URL: {url}")
 
             time.sleep(0.2)
         time.sleep(0.05)
@@ -137,8 +143,7 @@ def monitor(total_requests):
         with lock:
             err_rate = (error_counter / request_counter * 100) if request_counter > 0 else 0
             ok = request_counter - error_counter
-        # TAMPILKAN URL DI PROGRESS
-        print(f"Progress: {request_counter}/{total_requests} | OK: {ok} | Err: {error_counter} | {err_rate:.1f}% | Target: {url}")
+        print(f"Progress: {request_counter}/{total_requests} | OK: {ok} | Err: {error_counter} | {err_rate:.1f}% | Method: {method} | Target: {url}")
         time.sleep(2)
 
     stop_flag = True
@@ -151,11 +156,12 @@ def print_summary(elapsed):
     print(" LM_313 TEST SELESAI")
     print("="*50)
     print(f"Target URL : {url}")
-    print(f"Threads : {threads} | Timeout : {TIMEOUT}s | Retry : {MAX_RETRY}x")
+    print(f"Method     : {method}")
+    print(f"Threads    : {threads} | Timeout : {TIMEOUT}s | Retry : {MAX_RETRY}x")
     print(f"Total Request : {request_counter}")
-    print(f"Berhasil : {request_counter - error_counter} ({((request_counter-error_counter)/request_counter*100):.1f}%)")
-    print(f"Gagal : {error_counter} ({(error_counter/request_counter*100):.1f}%)")
-    print(f"Waktu Total : {elapsed:.2f} detik")
+    print(f"Berhasil   : {request_counter - error_counter} ({((request_counter-error_counter)/request_counter*100):.1f}%)")
+    print(f"Gagal      : {error_counter} ({(error_counter/request_counter*100):.1f}%)")
+    print(f"Waktu Total: {elapsed:.2f} detik")
     print(f"RPS Rata-rata : {request_counter/elapsed:.2f}" if elapsed > 0 else "RPS: 0")
 
     if response_times:
@@ -180,11 +186,20 @@ if __name__ == "__main__":
     total_requests = int(sys.argv[3]) if len(sys.argv) > 3 else 500
     TIMEOUT = int(sys.argv[4]) if len(sys.argv) > 4 else 30
 
+    # Ambil metode dari argumen ke-5 (jika ada)
+    if len(sys.argv) > 5:
+        method = sys.argv[5].upper()
+        if method not in ['GET', 'POST', 'HEAD']:
+            print("[!] Metode tidak dikenal. Gunakan GET, POST, atau HEAD. Default ke GET.")
+            method = 'GET'
+    else:
+        method = 'GET'
+
     if not url.startswith("http"):
         url = "https://" + url
 
     print(f"\nMulai test ke: {url}")
-    print(f"Threads: {threads} | Target: {total_requests} | Timeout: {TIMEOUT}s | Retry: {MAX_RETRY}x\n")
+    print(f"Threads: {threads} | Target: {total_requests} | Timeout: {TIMEOUT}s | Retry: {MAX_RETRY}x | Method: {method}\n")
 
     monitor_thread = threading.Thread(target=monitor, args=(total_requests,))
     monitor_thread.start()
