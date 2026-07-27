@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ----------------------------------------------------------------------------------------------
 # LM_313 Load Tester 
-# Usage: python3 LM_313.py https://target.com 50 600 20 [GET|POST|HEAD]
+# Usage: python3 LM313_FLOODER.py https://target.com 50 600 20 [GET|POST|HEAD]
 # ----------------------------------------------------------------------------------------------
 
 import urllib.request
